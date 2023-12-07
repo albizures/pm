@@ -1,0 +1,12 @@
+html.dark {
+  color-scheme: dark;
+  --c-base-300: 29, 35, 42;
+  --c-primary: 117, 130, 255;
+  --c-primary-content: 5, 6, 23
+}
+
+* {
+  user-select: none;
+  -webkit-user-select: none;
+  
+}

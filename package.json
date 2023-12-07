@@ -1,0 +1,42 @@
+{
+	"name": "projects-manager",
+	"type": "module",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc && vite build",
+		"preview": "vite preview",
+		"tauri": "tauri",
+		"test": "npm-run-all test:types test:lint test:js",
+		"test:js": "vitest",
+		"test:types": "tsc --noEmit",
+		"test:lint": "eslint .",
+		"lint:fix": "eslint . --fix"
+	},
+	"dependencies": {
+		"@await-to/core": "^1.0.0",
+		"@iconify-json/material-symbols-light": "^1.1.1",
+		"@tauri-apps/api": "^1.5.1",
+		"@unocss/reset": "^0.57.2",
+		"@vyke/elements": "^0.0.7",
+		"bytes": "^3.1.2",
+		"clsx": "^2.0.0",
+		"mitt": "^3.0.1",
+		"oby": "^15.1.0",
+		"tauri-plugin-fs-extra-api": "github:tauri-apps/tauri-plugin-fs-extra#v1",
+		"tauri-plugin-window-state-api": "github:tauri-apps/tauri-plugin-window-state#v1"
+	},
+	"devDependencies": {
+		"@antfu/eslint-config": "1.0.0-beta.29",
+		"@tauri-apps/cli": "^1.5.6",
+		"@types/bytes": "^3.1.4",
+		"@unocss/preset-uno": "^0.57.1",
+		"eslint": "^8.52.0",
+		"type-fest": "^4.6.0",
+		"typescript": "^5.0.2",
+		"unocss": "^0.57.1",
+		"vite": "^4.4.4",
+		"vitest": "^0.34.6"
+	}
+}

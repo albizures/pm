@@ -1,17 +1,9 @@
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error(transparent)]
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum MyError {
+    #[error("I/O error")]
     Io(#[from] std::io::Error),
-
-    #[error(transparent)]
-    FsExtra(#[from] fs_extra::error::Error),
-}
-
-impl serde::Serialize for Error {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::ser::Serializer,
-    {
-        serializer.serialize_str(self.to_string().as_ref())
-    }
+    #[error("system time error")]
+    SystemTime(#[from] std::time::SystemTimeError),
 }

@@ -1,42 +1,42 @@
 {
-	"name": "projects-manager",
-	"type": "module",
-	"version": "0.0.0",
-	"private": true,
-	"scripts": {
-		"dev": "vite",
-		"build": "tsc && vite build",
-		"preview": "vite preview",
-		"tauri": "tauri",
-		"test": "npm-run-all test:types test:lint test:js",
-		"test:js": "vitest",
-		"test:types": "tsc --noEmit",
-		"test:lint": "eslint .",
-		"lint:fix": "eslint . --fix"
-	},
-	"dependencies": {
-		"@await-to/core": "^1.0.0",
-		"@iconify-json/material-symbols-light": "^1.1.1",
-		"@tauri-apps/api": "^1.5.1",
-		"@unocss/reset": "^0.57.2",
-		"@vyke/elements": "^0.0.7",
-		"bytes": "^3.1.2",
-		"clsx": "^2.0.0",
-		"mitt": "^3.0.1",
-		"oby": "^15.1.0",
-		"tauri-plugin-fs-extra-api": "github:tauri-apps/tauri-plugin-fs-extra#v1",
-		"tauri-plugin-window-state-api": "github:tauri-apps/tauri-plugin-window-state#v1"
-	},
-	"devDependencies": {
-		"@antfu/eslint-config": "1.0.0-beta.29",
-		"@tauri-apps/cli": "^1.5.6",
-		"@types/bytes": "^3.1.4",
-		"@unocss/preset-uno": "^0.57.1",
-		"eslint": "^8.52.0",
-		"type-fest": "^4.6.0",
-		"typescript": "^5.0.2",
-		"unocss": "^0.57.1",
-		"vite": "^4.4.4",
-		"vitest": "^0.34.6"
-	}
+  "name": "pm",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "",
+  "license": "MIT",
+  "scripts": {
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview",
+    "tauri": "tauri",
+    "test:lint": "eslint ."
+  },
+  "dependencies": {
+    "@tanstack/solid-table": "^8.19.2",
+    "@tauri-apps/api": "^1",
+    "@vyke/results": "npm:@jsr/vyke__results@^0.4.3",
+    "@vyke/solid-destructurable": "npm:@jsr/vyke__solid-destructurable@^0.0.2",
+    "@vyke/solid-stack": "file:../../@vyke/solid-stack/vyke-solid-stack-0.0.15.tgz",
+    "date-fns": "^3.6.0",
+    "solid-icons": "^1.1.0",
+    "solid-js": "^1.8.18",
+    "tauri-plugin-fs-extra-api": "github:tauri-apps/tauri-plugin-fs-extra#v1",
+    "tauri-plugin-window-state-api": "github:tauri-apps/tauri-plugin-window-state#v1"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^2.21.3",
+    "@tauri-apps/cli": "^1",
+    "@vyke/tailwind-shortcuts": "npm:@jsr/vyke__tailwind-shortcuts@^0.1.1",
+    "autoprefixer": "^10.4.19",
+    "daisyui": "^4.12.10",
+    "eslint": "9.6.0",
+    "eslint-plugin-solid": "^0.14.1",
+    "postcss": "^8.4.39",
+    "tailwindcss": "^3.4.4",
+    "type-fest": "^4.21.0",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.3",
+    "vite-plugin-solid": "^2.10.2"
+  }
 }

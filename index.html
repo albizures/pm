@@ -1,16 +1,17 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<link rel="stylesheet" href="/src/styles.css" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Project Manager</title>
-	</head>
+<html lang="en" class="bg-transparent">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <link rel="icon" type="image/svg+xml" href="/src/assets/logo.svg" />
+    <title>Tauri + Solid + Typescript App</title>
+  </head>
 
-	<body>
-		<div class="full-expand bg-base-300 bg-opacity-50 overflow-hidden overflow-scroll rounded-2xl border-transparent">
-			<div class="flex absolute w-full h-full" id="app"></div>
-		</div>
-		<script type="module" src="./src/main.ts" defer></script>
-	</body>
+  <body class="bg-transparent overflow-hidden">
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+
+    <script src="/src/index.tsx" type="module"></script>
+  </body>
 </html>

@@ -1,10 +1,9 @@
-import UnoCSS from 'unocss/vite'
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vite'
+import solid from 'vite-plugin-solid'
 
-export default defineConfig({
-	plugins: [
-		UnoCSS(),
-	],
+// https://vitejs.dev/config/
+export default defineConfig(async () => ({
+	plugins: [solid()],
 
 	// Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
 	//
@@ -14,8 +13,9 @@ export default defineConfig({
 	server: {
 		port: 1420,
 		strictPort: true,
+		watch: {
+			// 3. tell vite to ignore watching `src-tauri`
+			ignored: ['**/src-tauri/**'],
+		},
 	},
-	// 3. to make use of `TAURI_DEBUG` and other env variables
-	// https://tauri.app/v1/api/config#buildconfig.beforedevcommand
-	envPrefix: ['VITE_', 'TAURI_'],
-})
+}))

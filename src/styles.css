@@ -1,12 +1,26 @@
-html.dark {
-  color-scheme: dark;
-  --c-base-300: 29, 35, 42;
-  --c-primary: 117, 130, 255;
-  --c-primary-content: 5, 6, 23
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.control-base {
+  /* positioning */
+  @apply content-center items-center justify-center self-center;
+  /* styling */
+  @apply aspect-square h-3 w-3 cursor-default rounded-full border border-black/[.12] text-center text-black/60 active:text-black/60 dark:border-none;
 }
 
-* {
-  user-select: none;
-  -webkit-user-select: none;
-  
+.control-base:hover {
+  @apply bg-black/[.08];
+}
+
+.control-close {
+  @apply bg-[#ff544d] hover:bg-[#ff544d] active:bg-[#bf403a];
+}
+
+.control-minimize {
+  @apply bg-[#ffbc2b] hover:bg-[#ffbc2b] active:bg-[#bf8a1a];
+}
+
+.control-maximize {
+  @apply bg-[#28c941] hover:bg-[#28c941] active:bg-[#1e8a32];
 }

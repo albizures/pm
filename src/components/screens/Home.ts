@@ -1,0 +1,102 @@
+import type { Project } from '../../entities/project/project'
+import { $list, $when } from '@vyke/taggy'
+import { computed, signal } from '@vyke/taggy/signals'
+import clsx from 'clsx'
+import Fuse from 'fuse.js'
+import { ProjectBox } from '../../entities/project/project-box'
+import { rootSola } from '../../logger'
+import { button, div, input, label, li, span, ul } from '../../tags'
+import { Icon } from '../Icon'
+import { ProjectCard } from '../ProjectCard'
+import { SearchInput } from '../SearchInput'
+
+const sola = rootSola.withTag('Home')
+
+export function Home() {
+	ProjectBox.load()
+
+	const fuse = new Fuse([] as Array<Project>, {
+		threshold: 0.3,
+		keys: ['name', 'path', 'tags'],
+	})
+
+	const $search = signal('')
+	const $selectedTags = signal<Array<string>>([])
+	const $results = computed(() => {
+		const tags = $selectedTags().map((tag) => `=${tag}`).join(' ')
+		const searchValue = `${$search()} ${tags}`.trim()
+		sola.info('search', searchValue)
+		return fuse.search(searchValue).map((result) => result.item)
+	})
+	const $withChanges = signal(false)
+
+	function toggleTag(tag: string) {
+		$selectedTags($selectedTags().includes(tag) ? $selectedTags().filter((t) => t !== tag) : [...$selectedTags(), tag])
+	}
+
+	return div([
+		div([
+			div({ className: 'flex gap-2 p-4 justify-between' }, [
+				div({ className: 'flex gap-2 flex-1 items-center' }, [
+					SearchInput({ $value: $search }),
+					label({ className: 'text-sm text-gray-500 flex gap-2 items-center' }, [
+						input({
+							type: 'checkbox',
+							checked: $withChanges(),
+							className: 'toggle',
+							onclick() {
+								sola.debug('toggle with changes', $withChanges())
+								$withChanges(!$withChanges())
+							},
+						}),
+						span([
+							'Only with changes',
+						]),
+					]),
+					div({ className: 'flex gap-2' }, [
+						$list($selectedTags, (tag) => button({
+							className: 'badge badge-outline badge-secondary',
+							onclick() {
+								toggleTag(tag)
+							},
+						}, [
+							tag,
+							Icon({ name: 'close' }),
+						])),
+					]),
+				]),
+				div({ className: 'flex gap-2' }, [
+					button({
+						className: 'btn btn-secondary btn-soft',
+						onclick() {
+							ProjectBox.scanProjects()
+						},
+						disabled: ProjectBox.$scanning(),
+					}, [
+						$when(ProjectBox.$scanning,
+							[true, () => span({ className: 'loading loading-spinner loading-sm' })],
+							[false, () => Icon({ name: 'scan' })],
+						),
+						'Scan Projects',
+					]),
+				]),
+			]),
+			ul({ className: 'grid grid-cols-2 md:grid-cols-3 gap-4 px-4 pb-4' }, [
+				$list(ProjectBox.$projects, ($project) => {
+					fuse.add($project())
+
+					const $isHiddenByChanges = computed(() => $withChanges() && !$project().hasChanges)
+					const $isHiddenBySearch = computed(() => $results().length > 0 && !$results().includes($project()))
+
+					return li({
+						className: computed(() => clsx({
+							hidden: $isHiddenByChanges() || $isHiddenBySearch(),
+						})),
+					}, [
+						ProjectCard({ $project, onToggleTag: toggleTag }),
+					])
+				}),
+			]),
+		]),
+	])
+}

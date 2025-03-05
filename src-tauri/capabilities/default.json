@@ -1,0 +1,80 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "sql:default",
+    "sql:allow-execute",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        {
+          "path": "$HOME/projects/**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-home-meta",
+      "allow": [
+        {
+          "path": "$HOME/projects/**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-home-meta-recursive",
+      "allow": [
+        {
+          "path": "$HOME/projects/**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-home-read",
+      "allow": [
+        {
+          "path": "$HOME/projects/**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-home-read-recursive",
+      "allow": [
+        {
+          "path": "$HOME/projects/**"
+        }
+      ]
+    },
+    "shell:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "git-status",
+          "cmd": "git",
+          "args": ["status"]
+        },
+        {
+          "name": "git-status-porcelain",
+          "cmd": "git",
+          "args": ["status", "--porcelain"]
+        },
+        {
+          "name": "git-ignore-files",
+          "cmd": "git",
+          "args": ["status", "--ignored", "-s"]
+        }, 
+        {
+          "name": "dist-usage",
+          "cmd": "du",
+          "args": ["-d", "0", {"validator": "\\S+"}]
+        }
+      ]
+    }
+  ]
+}

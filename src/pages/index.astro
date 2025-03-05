@@ -1,0 +1,16 @@
+---
+import Screen from '../components/layouts/Screen.astro'
+---
+
+<Screen title="Home">
+	<div id="root"></div>
+</Screen>
+
+<script>
+	import { createRenderer } from '@vyke/taggy'
+	import { Home } from '../components/screens/Home.ts'
+
+	const renderer = createRenderer(document.getElementById('root')!)
+
+	renderer.render(Home())
+</script>

@@ -1,0 +1,29 @@
+---
+import Screen from '../components/layouts/Screen.astro'
+---
+
+<Screen title="Project">
+	<di id="root"></di>
+</Screen>
+
+<script>
+	import { createRenderer } from '@vyke/taggy'
+	import { z } from 'zod'
+	import { ProjectScreen } from '../components/screens/Project.ts'
+	import { assert, expect } from '../error'
+	import { Params } from '../services/params'
+
+	const paramsSchema = z.object({
+		id: z.coerce.number().int(),
+		previusScreen: z.string().optional().default('/'),
+	})
+
+	const { id, previusScreen } = expect(() => Params.get(paramsSchema), 'params are required')
+
+	const root = document.getElementById('root')
+	assert(root instanceof HTMLElement, 'root is required')
+
+	const renderer = createRenderer(root)
+
+	renderer.render(ProjectScreen({ id, previusScreen }))
+</script>

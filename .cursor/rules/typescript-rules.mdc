@@ -1,0 +1,17 @@
+---
+description: This rules have to be follow when working with typescript
+globs: *.tsx, *.ts
+---
+
+# Typescript Rules
+
+- Avoid using default exports
+- Prefer using named exports
+- Avoid using arrow functions when they have a name, like in exports and methods
+- Prefer using the function definition syntax
+- Prefer types over interfaces
+- Always import types using the import type keyword
+- Prefer unknown over any
+
+When using Zod
+- prefer using safeParse over safe

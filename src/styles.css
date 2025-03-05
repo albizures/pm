@@ -1,26 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-.control-base {
-  /* positioning */
-  @apply content-center items-center justify-center self-center;
-  /* styling */
-  @apply aspect-square h-3 w-3 cursor-default rounded-full border border-black/[.12] text-center text-black/60 active:text-black/60 dark:border-none;
+@plugin "daisyui" {
+	themes: dim --default;
 }
 
-.control-base:hover {
-  @apply bg-black/[.08];
-}
-
-.control-close {
-  @apply bg-[#ff544d] hover:bg-[#ff544d] active:bg-[#bf403a];
-}
-
-.control-minimize {
-  @apply bg-[#ffbc2b] hover:bg-[#ffbc2b] active:bg-[#bf8a1a];
-}
-
-.control-maximize {
-  @apply bg-[#28c941] hover:bg-[#28c941] active:bg-[#1e8a32];
+@plugin "@iconify/tailwind4" {
+	prefix: 'iconify';
+	prefixes: fa6-solid, fa-solid, fa-brands;
+	scale: 1.2;
 }

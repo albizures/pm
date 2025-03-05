@@ -1,42 +1,46 @@
 {
-  "name": "pm",
-  "type": "module",
-  "version": "0.0.0",
-  "description": "",
-  "license": "MIT",
-  "scripts": {
-    "start": "vite",
-    "dev": "vite",
-    "build": "vite build",
-    "serve": "vite preview",
-    "tauri": "tauri",
-    "test:lint": "eslint ."
-  },
-  "dependencies": {
-    "@tanstack/solid-table": "^8.19.2",
-    "@tauri-apps/api": "^1",
-    "@vyke/results": "npm:@jsr/vyke__results@^0.4.3",
-    "@vyke/solid-destructurable": "npm:@jsr/vyke__solid-destructurable@^0.0.2",
-    "@vyke/solid-stack": "file:../../@vyke/solid-stack/vyke-solid-stack-0.0.15.tgz",
-    "date-fns": "^3.6.0",
-    "solid-icons": "^1.1.0",
-    "solid-js": "^1.8.18",
-    "tauri-plugin-fs-extra-api": "github:tauri-apps/tauri-plugin-fs-extra#v1",
-    "tauri-plugin-window-state-api": "github:tauri-apps/tauri-plugin-window-state#v1"
-  },
-  "devDependencies": {
-    "@antfu/eslint-config": "^2.21.3",
-    "@tauri-apps/cli": "^1",
-    "@vyke/tailwind-shortcuts": "npm:@jsr/vyke__tailwind-shortcuts@^0.1.1",
-    "autoprefixer": "^10.4.19",
-    "daisyui": "^4.12.10",
-    "eslint": "9.6.0",
-    "eslint-plugin-solid": "^0.14.1",
-    "postcss": "^8.4.39",
-    "tailwindcss": "^3.4.4",
-    "type-fest": "^4.21.0",
-    "typescript": "^5.5.3",
-    "vite": "^5.3.3",
-    "vite-plugin-solid": "^2.10.2"
-  }
+	"name": "v2-pm",
+	"type": "module",
+	"version": "0.1.0",
+	"description": "",
+	"license": "MIT",
+	"scripts": {
+		"dev": "astro dev",
+		"build": "astro build",
+		"preview": "astro preview",
+		"tauri": "tauri"
+	},
+	"dependencies": {
+		"@tailwindcss/vite": "^4.0.9",
+		"@tauri-apps/api": "^2.3.0",
+		"@tauri-apps/plugin-fs": "~2.2.0",
+		"@tauri-apps/plugin-opener": "^2.2.6",
+		"@tauri-apps/plugin-shell": "~2.2.0",
+		"@tauri-apps/plugin-sql": "^2.2.0",
+		"@tauri-apps/plugin-window-state": "^2.2.1",
+		"@vyke/sola": "^0.0.7",
+		"@vyke/taggy": "^0.3.3",
+		"astro": "^5.4.1",
+		"clsx": "^2.1.1",
+		"date-fns": "^4.1.0",
+		"fuse.js": "^7.1.0",
+		"tailwindcss": "^4.0.9",
+		"zod": "^3.24.2"
+	},
+	"devDependencies": {
+		"@antfu/eslint-config": "^4.3.0",
+		"@iconify-json/fa-brands": "^1.2.1",
+		"@iconify-json/fa-solid": "^1.2.1",
+		"@iconify-json/fa6-solid": "^1.2.3",
+		"@iconify/tailwind4": "^1.0.6",
+		"@tauri-apps/cli": "^2.3.1",
+		"@types/node": "^22.13.8",
+		"astro-eslint-parser": "^1.2.1",
+		"daisyui": "^5.0.0",
+		"eslint": "^9.21.0",
+		"eslint-plugin-astro": "^1.3.1",
+		"eslint-plugin-format": "^1.0.1",
+		"prettier-plugin-astro": "^0.14.1",
+		"typescript": "~5.8.2"
+	}
 }

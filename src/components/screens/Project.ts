@@ -2,13 +2,13 @@ import type { AccessSignal, Signal } from '@vyke/taggy/signals'
 import type { Project } from '../../entities/project/project'
 import type { UncommitedChange } from '../../utils/git'
 import { $list, loadSignal } from '@vyke/taggy'
-import { $access, computed, effect, signal } from '@vyke/taggy/signals'
+import { $access, computed } from '@vyke/taggy/signals'
 import { $formatDate, formatDate } from '../../date'
 import { ProjectBox } from '../../entities/project/project-box'
+import { getMetadata } from '../../entities/project/project-metadata'
 import { unwrap } from '../../error'
 import { a, button, div, h1, li, p, span, ul } from '../../tags'
 import { $prettySize, getFileMetadata } from '../../utils/files'
-import { findUncommitedChanges } from '../../utils/git'
 import { SpaceAvailableToFree } from '../stats/SpaceAvailableToFreeStat'
 import { UncommitedChangesStat } from '../stats/UncommitedChangesStat'
 
@@ -46,7 +46,13 @@ type ProjectPanelProps = {
 
 function ProjectPanel(props: ProjectPanelProps) {
 	const $project = $access(props.$project)
-	const $amountOfUncommitedChanges = signal(0)
+	const $uncommitedChangesLoader = getMetadata($project).$uncommitedChanges
+
+	const $amountOfUncommitedChanges = computed(() => {
+		const current = $uncommitedChangesLoader()
+
+		return current.status === 'loaded' ? current.value().length : 0
+	})
 
 	return div([
 		div({ className: 'flex justify-between' }, [
@@ -87,7 +93,7 @@ function ProjectPanel(props: ProjectPanelProps) {
 			]),
 		]),
 		div({ className: 'flex flex-col gap-2' }, [
-			UncommitedChanges({ $project, $amountOfUncommitedChanges }),
+			UncommitedChanges({ $project }),
 			AvailableFreeSpace({ $project }),
 		]),
 	])
@@ -95,17 +101,12 @@ function ProjectPanel(props: ProjectPanelProps) {
 
 type UncommitedChangeProps = {
 	$project: AccessSignal<Project>
-	$amountOfUncommitedChanges: Signal<number>
 }
 
 function UncommitedChanges(props: UncommitedChangeProps) {
-	const { $project, $amountOfUncommitedChanges } = props
+	const { $project } = props
 
-	const $uncommitedChangesLoader = loadSignal(async () => {
-		return unwrap(findUncommitedChanges($project.path()))
-	})
-
-	const $status = computed(() => $uncommitedChangesLoader().status)
+	const $uncommitedChangesLoader = getMetadata($project).$uncommitedChanges
 
 	return div([
 		h1(['Uncommited changes:']),

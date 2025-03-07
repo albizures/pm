@@ -8,7 +8,7 @@ import { ProjectBox } from '../../entities/project/project-box'
 import { unwrap } from '../../error'
 import { a, button, div, h1, li, p, span, ul } from '../../tags'
 import { $prettySize, getFileMetadata } from '../../utils/files'
-import { getUncommitedChanges } from '../../utils/git'
+import { findUncommitedChanges } from '../../utils/git'
 import { SpaceAvailableToFree } from '../stats/SpaceAvailableToFreeStat'
 import { UncommitedChangesStat } from '../stats/UncommitedChangesStat'
 
@@ -102,7 +102,7 @@ function UncommitedChanges(props: UncommitedChangeProps) {
 	const { $project, $amountOfUncommitedChanges } = props
 
 	const $uncommitedChangesLoader = loadSignal(async () => {
-		return unwrap(getUncommitedChanges($project.path()))
+		return unwrap(findUncommitedChanges($project.path()))
 	})
 
 	const $status = computed(() => $uncommitedChangesLoader().status)

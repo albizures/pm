@@ -48,7 +48,7 @@ function isShortChangeType(value: string): value is ShortChangeType {
 	return shortChangeTypes.includes(value as ShortChangeType)
 }
 
-export async function getUncommitedChanges(path: string): Promise<Maybe<Array<UncommitedChange>>> {
+export async function findUncommitedChanges(path: string): Promise<Maybe<Array<UncommitedChange>>> {
 	const gitStatus = Command.create('git-status-porcelain', ['status', '--porcelain'], {
 		cwd: path,
 	})

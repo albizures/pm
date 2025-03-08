@@ -15,8 +15,8 @@ export function UncommitedChangesStat(props: UncommitedChangesStatProps) {
 		div({ className: 'stat-figure text-secondary' }, [
 			Icon({ name: 'disk-usage' }),
 		]),
-		div({ className: 'stat-title' }, ['Space Available to Free']),
-		div({ className: 'stat-value' }, [
+		div({ className: 'stat-title text-center' }, ['Uncommited Changes']),
+		div({ className: 'stat-value text-center' }, [
 			$amount(),
 		]),
 		div({ className: 'stat-desc flex justify-center' }, [

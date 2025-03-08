@@ -18,7 +18,7 @@ export function SpaceAvailableToFree(props: SpaceAvailableToFreeProps) {
 			Icon({ name: 'disk-usage' }),
 		]),
 		div({ className: 'stat-title' }, ['Space Available to Free']),
-		div({ className: 'stat-value' }, [
+		div({ className: 'stat-value text-center' }, [
 			$prettySize($diskUsage),
 		]),
 		div({ className: 'stat-desc flex justify-center' }, [

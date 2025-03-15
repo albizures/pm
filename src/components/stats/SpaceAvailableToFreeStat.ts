@@ -1,23 +1,28 @@
-import type { ReadSignal } from '@vyke/taggy/signals'
+import type { $Project } from '../../entities/project/project'
 import { $when } from '@vyke/taggy'
 import { computed } from '@vyke/taggy/signals'
+import { ProjectBox } from '../../entities/project/project-box'
 import { button, div } from '../../tags'
 import { $prettySize } from '../../utils/files'
 import { Icon } from '../Icon'
 
 type SpaceAvailableToFreeProps = {
-	$diskUsage: ReadSignal<number>
+	$project: $Project
 	onFreeSpace?: () => void
 }
 
 export function SpaceAvailableToFree(props: SpaceAvailableToFreeProps) {
-	const { $diskUsage } = props
+	const { $project } = props
+	const $folders = ProjectBox.getProjectFoldersByProject($project)
+
+	const $amountOfFolders = computed(() => $folders().$value().length)
+	const $diskUsage = computed(() => $folders().$value().reduce((acc, folder) => acc + folder.diskUsage, 0))
 
 	return div({ className: 'stat' }, [
 		div({ className: 'stat-figure text-secondary' }, [
 			Icon({ name: 'disk-usage' }),
 		]),
-		div({ className: 'stat-title' }, ['Space Available to Free']),
+		div({ className: 'stat-title' }, ['Space Available to Free in ', $amountOfFolders, ' folders']),
 		div({ className: 'stat-value text-center' }, [
 			$prettySize($diskUsage),
 		]),

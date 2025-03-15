@@ -17,7 +17,7 @@ export function Home() {
 
 	const fuse = new Fuse([] as Array<Project>, {
 		threshold: 0.3,
-		keys: ['name', 'path', 'tags'],
+		keys: ['name', 'repoUrl', 'tags'],
 	})
 
 	const $search = signal('')
@@ -25,10 +25,9 @@ export function Home() {
 	const $results = computed(() => {
 		const tags = $selectedTags().map((tag) => `=${tag}`).join(' ')
 		const searchValue = `${$search()} ${tags}`.trim()
-		sola.info('search', searchValue)
 		return fuse.search(searchValue).map((result) => result.item)
 	})
-	const $withChanges = signal(false)
+	const $withRepo = signal(false)
 
 	function toggleTag(tag: string) {
 		$selectedTags($selectedTags().includes(tag) ? $selectedTags().filter((t) => t !== tag) : [...$selectedTags(), tag])
@@ -36,21 +35,22 @@ export function Home() {
 
 	return div([
 		div([
+			// header or toolbar
 			div({ className: 'flex gap-2 p-4 justify-between' }, [
 				div({ className: 'flex gap-2 flex-1 items-center' }, [
 					SearchInput({ $value: $search }),
 					label({ className: 'text-sm text-gray-500 flex gap-2 items-center' }, [
 						input({
 							type: 'checkbox',
-							checked: $withChanges(),
+							checked: $withRepo(),
 							className: 'toggle',
 							onclick() {
-								sola.debug('toggle with changes', $withChanges())
-								$withChanges(!$withChanges())
+								sola.debug('toggle with changes', $withRepo())
+								$withRepo(!$withRepo())
 							},
 						}),
 						span([
-							'Only with changes',
+							'Only with repo',
 						]),
 					]),
 					div({ className: 'flex gap-2' }, [
@@ -69,7 +69,7 @@ export function Home() {
 					button({
 						className: 'btn btn-secondary btn-soft',
 						onclick() {
-							ProjectBox.scanProjects()
+							ProjectBox.scanFolders()
 						},
 						disabled: ProjectBox.$scanning(),
 					}, [
@@ -81,16 +81,18 @@ export function Home() {
 					]),
 				]),
 			]),
-			ul({ className: 'grid grid-cols-2 md:grid-cols-3 gap-4 px-4 pb-4' }, [
+
+			// grid of projects
+			ul({ className: 'grid grid-cols-2 md:grid-cols-4 gap-4 px-4 pb-4' }, [
 				$list(ProjectBox.$projects, ($project) => {
 					fuse.add($project())
 
-					const $isHiddenByChanges = computed(() => $withChanges() && !$project().hasChanges)
+					const $isHiddenByRepo = computed(() => $withRepo() && !$project().repoUrl)
 					const $isHiddenBySearch = computed(() => $results().length > 0 && !$results().includes($project()))
 
 					return li({
 						className: computed(() => clsx({
-							hidden: $isHiddenByChanges() || $isHiddenBySearch(),
+							hidden: $isHiddenByRepo() || $isHiddenBySearch(),
 						})),
 					}, [
 						ProjectCard({ $project, onToggleTag: toggleTag }),

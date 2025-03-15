@@ -68,7 +68,12 @@
           "name": "git-ignore-files",
           "cmd": "git",
           "args": ["status", "--ignored", "-s"]
-        }, 
+        },
+        {
+          "name": "git-remote-url",
+          "cmd": "git",
+          "args": ["remote", "get-url", "origin"]
+        },
         {
           "name": "dist-usage",
           "cmd": "du",

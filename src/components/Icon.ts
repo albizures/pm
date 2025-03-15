@@ -8,14 +8,18 @@ const iconNames = {
 	'search': 'fa6-solid--magnifying-glass',
 	'close': 'fa6-solid--xmark',
 	'trash': 'fa6-solid--trash-can',
+	'folder': 'fa6-solid--folder',
 } as const
 
 type IconName = keyof typeof iconNames
 
 type IconProps = {
 	name: IconName
+	className?: string
 }
 
 export function Icon(props: IconProps) {
-	return span({ className: `iconify ${iconNames[props.name]}` })
+	const { className = '', name } = props
+
+	return span({ className: `iconify ${iconNames[name]} ${className}` })
 }

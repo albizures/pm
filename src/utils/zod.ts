@@ -18,7 +18,22 @@ type ParseArrayArgs<TSchema extends z.ZodTypeAny> = {
 	handleItem: (item: z.infer<TSchema>) => void
 	handleError?: HandleError
 }
-
+/**
+ * @example
+ * ```ts
+ * const data = await DB.select('SELECT * FROM project_folders')
+ * const projectFolders = parseArray({
+ * 	data,
+ * 	schema: projectFolderSchema,
+ * 	handleItem(item) {
+ * 		console.log(item)
+ * 	},
+ * 	handleError(value, error) {
+ * 		console.error(value, error)
+ * 	},
+ * })
+ * ```
+ */
 export function parseArray<TItem extends z.ZodTypeAny>(args: ParseArrayArgs<TItem>) {
 	const { data, schema, handleItem, handleError = defaultHandleError } = args
 	const arrayResult = anyArraySchema.safeParse(data)

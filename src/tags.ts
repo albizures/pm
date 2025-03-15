@@ -7,6 +7,8 @@ export const {
 	li,
 	a,
 	h1,
+	h2,
+	h3,
 	span,
 	p,
 	input,

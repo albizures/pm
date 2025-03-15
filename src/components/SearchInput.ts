@@ -15,7 +15,7 @@ export function SearchInput(props: SearchInputProps) {
 		input({
 			required: true,
 			placeholder: 'Search',
-			...syncValue($value),
+			...syncValue($value as Signal<string>),
 		}),
 		button({
 			className: computed(() => clsx('h-[1em] w-[1em] p-0 cursor-pointer', {

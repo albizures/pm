@@ -33,6 +33,15 @@ export function maybe<TValue>(value: TValue): Maybe<TValue> {
 	return value as unknown as Maybe<TValue>
 }
 
+export function empty(): Maybe<undefined> {
+	return maybe(undefined)
+}
+
+export function emptyPromise(): Promise<Maybe<undefined>> {
+	return Promise.resolve(empty())
+}
+
+
 export type Throwable<TFn extends AnyFn> = TFn extends (...args: infer TArgs) => Promise<infer TReturn>
 	? (...args: TArgs) => Promise<Maybe<TReturn>>
 	: TFn extends (...args: infer TArgs) => infer TReturn
@@ -112,23 +121,8 @@ export async function unwrap<TValue>(promise: Promise<Maybe<TValue>>, customErro
 	}
 }
 
-export async function attempt<TValue>(promise: Promise<TValue>, customError?: ErrorValue): Promise<Maybe<TValue>> {
-	try {
-		const result = await promise
-
-		return maybe(result)
-	}
-	catch (error) {
-		if (customError) {
-			throw (
-				customError instanceof Error
-					? customError
-					: new Error(customError)
-			)
-		}
-
-		throw error
-	}
+export function unwrapOr<TValue>(value: Promise<Maybe<TValue>>, defaultValue: TValue): Promise<TValue> {
+	return unwrap(value).catch(() => defaultValue)
 }
 
 /**

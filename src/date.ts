@@ -40,13 +40,3 @@ export function formatDate(date: Date | undefined, formatName: Format = 'full') 
 export function $formatDate($date: Signal<Date>, formatName: Format = 'full') {
 	return computed(() => formatDate($date(), formatName))
 }
-
-export function formatDateFromNow(date: Date | undefined) {
-	if (!date) {
-		return 'Invalid date'
-	}
-
-	return formatDistance(date, new Date(), {
-		addSuffix: true,
-	})
-}

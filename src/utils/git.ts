@@ -16,6 +16,32 @@ export async function hasChanges(path: string): Promise<Maybe<boolean>> {
 	return maybe(!result.stdout.includes('nothing to commit, working tree clean'))
 }
 
+export async function getRemoteUrl(path: string): Promise<Maybe<string | undefined>> {
+	const gitRemoteUrl = Command.create('git-remote-url', ['remote', 'get-url', 'origin'], {
+		cwd: path,
+	})
+
+	const result = await gitRemoteUrl.execute()
+	const url = result.stdout.trim()
+
+	if (url.includes('fatal') || url === '') {
+		throw new Error('Failed to get remote url')
+	}
+
+	return maybe(normalizeRepoUrl(url))
+}
+
+function normalizeRepoUrl(repoUrl: string) {
+	if (repoUrl.startsWith('git@')) {
+		return repoUrl
+			.replace(':', '/')
+			.replace('.git', '')
+			.replace('git@', 'https://')
+	}
+
+	return repoUrl
+}
+
 export async function getBranch(path: string): Promise<Maybe<string>> {
 	const gitBranch = Command.create('git', ['branch', '--show-current'], {
 		cwd: path,

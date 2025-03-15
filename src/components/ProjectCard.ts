@@ -1,8 +1,9 @@
 import type { Signal } from '@vyke/taggy/signals'
 import type { Project } from '../entities/project/project'
 import { $list, $when } from '@vyke/taggy'
-import { $access } from '@vyke/taggy/signals'
+import { $access, computed } from '@vyke/taggy/signals'
 import { $formatDate } from '../date'
+import { ProjectBox } from '../entities/project/project-box'
 import { rootSola } from '../logger'
 import { a, button, div, h1, h4, li, span, ul } from '../tags'
 import { $prettySize } from '../utils/files'
@@ -18,7 +19,9 @@ type ProjectCardProps = {
 export function ProjectCard(props: ProjectCardProps) {
 	const { onToggleTag } = props
 	const $project = $access(props.$project)
-
+	const $projectFolders = ProjectBox.getProjectFoldersByProject(props.$project)
+	const $amountOfFolders = computed(() => $projectFolders().$value().length)
+	const $diskUsage = computed(() => $projectFolders().$value().reduce((acc, folder) => acc + folder.diskUsage, 0))
 	const href = `/project?id=${$project().id}`
 
 	return div({
@@ -26,31 +29,32 @@ export function ProjectCard(props: ProjectCardProps) {
 	}, [
 		// title
 		a({ href }, [
-			h1({ className: 'text-lg font-bold' }, [$project.name]),
+			h1({ className: 'text-lg font-bold' }, [
+				$project.name,
+			]),
 		]),
 
-		// path as subtitle
-		a({ href }, [
-			h4({ className: 'text-xs text-gray-500 -mt-1' }, [$project().path]),
+		// repo url as subtitle
+		div({ className: 'opacity-50' }, [
+			$when($project.repoUrl,
+				$when.case($when.isString, (repoUrl) => a({ href }, [
+					h4({ className: 'text-xs text-base-content -mt-1' }, [repoUrl]),
+				])),
+				$when.otherwise(() => h4({ className: 'text-xs text-base-content -mt-1' }, ['No repo url'])),
+			),
 		]),
 
 		// top row
 		div({ className: 'flex gap-2 items-center justify-between mt-1' }, [
-			// disk usage and changes
-			div({ className: 'flex gap-2' }, [
-				span({ className: 'badge badge-info badge-sm badge-soft' }, [
-					Icon({ name: 'disk-usage' }),
-					$prettySize($project.diskUsage),
+			div({ className: 'flex gap-4' }, [
+				span({ className: 'text-xs text-base-content flex items-center gap-1' }, [
+					Icon({ name: 'folder', className: 'text-secondary opacity-50' }),
+					$amountOfFolders,
 				]),
-				$when($project.hasChanges,
-					[true, () =>
-						span({ className: 'badge badge-info badge-sm badge-soft' }, [
-							Icon({ name: 'git' }),
-							'With Changes',
-						]),
-					],
-					[false, () => ''],
-				),
+				span({ className: 'text-xs text-base-content flex items-center gap-1' }, [
+					Icon({ name: 'disk-usage', className: 'text-secondary opacity-50' }),
+					$prettySize($diskUsage),
+				]),
 			]),
 
 			// tags
@@ -70,7 +74,7 @@ export function ProjectCard(props: ProjectCardProps) {
 		]),
 
 		// bottom row
-		div({ className: 'flex gap-2' }, [
+		div({ className: 'flex gap-2 mt-1' }, [
 			span({ className: 'text-xs text-gray-500 flex-1' }, [
 				'Updated: ', $formatDate($project.updatedAt, 'time-ago'),
 			]),

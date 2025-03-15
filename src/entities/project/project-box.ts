@@ -1,218 +1,184 @@
-import type { ReadSignal, Signal } from '@vyke/taggy/signals'
+import type { LoaderSignal } from '@vyke/taggy'
+import type { ReadSignal } from '@vyke/taggy/signals'
 import type { Maybe } from '../../error'
-import type { Project } from './project'
-import { computed, signal } from '@vyke/taggy/signals'
-import { differenceInMinutes } from 'date-fns'
-import { z } from 'zod'
-import { DB } from '../../db'
-import { maybe, to, unwrap } from '../../error'
+import type { $Project, FoundProject, Project, ProjectFolder } from './project'
+import { signal } from '@vyke/taggy/signals'
+import { assert, maybe, to, unwrap } from '../../error'
 import { rootSola } from '../../logger'
-import { exists, pathInRoot } from '../../utils/files'
-import { parseArray } from '../../utils/zod'
-import { findProjectsIn, getProjectFromDir, projectSchema } from './project'
+
+import { pathInRoot } from '../../utils/files'
+import { createBox } from '../box'
+import { findProjectsIn } from './project'
+import {
+	createProject,
+	createProjectFolder,
+	getAllProjects,
+	getFoldersByProjectId,
+	getProjectById,
+	getProjectByRepoUrl,
+	getProjectFolderByPath,
+} from './project-queries'
 
 const sola = rootSola.withTag('project')
-const selectResultSchema = z.array(projectSchema)
 
 function createProjectBox() {
-	const projectsById = new Map<number, Signal<Project>>()
-	const $projects = signal<Array<Signal<Project>>>([])
 	const $scanning = signal(false)
+
+	const projectBox = createBox({
+		name: 'project',
+		getId: (project: Project) => project.id,
+	})
+
+	function clear() {
+		projectBox.clear()
+	}
 
 	async function load() {
 		// let's reset the projects first
-		$projects([])
+		clear()
 
-		const data = await DB.select('SELECT * FROM projects')
+		// load the projects and project folders from the database
+		const projects = await unwrap(getAllProjects())
 
-		parseArray({
-			data,
-			schema: projectSchema,
-			handleError(value, error) {
-				sola.error('Trying to parse project', value)
-				sola.error('Resulted in error', error)
-			},
-			handleItem(item) {
-				const $project = signal(item)
-				$projects([...$projects(), $project])
-
-				addToSyncQueue($project)
-			},
-		})
-
-		if ($projects().length === 0) {
-			await scanProjects()
-
-			return
+		for (const project of projects) {
+			projectBox.add(project)
 		}
 
-		return $projects()
+		// if there are no projects, we need to scan the projects folder
+		if (projects.length === 0) {
+			await scanFolders()
+		}
+
+		return projectBox.$values()
 	}
 
-	async function addProject(data: Project) {
-		// check if the project already exists using the path
-		const found = await to(DB.select(`SELECT * FROM projects WHERE path = $1`, data.path))
+	/**
+	 * Adds a project by folder.
+	 * This is used when a project is found in the projects folder.
+	 * This will create a new project and a new project folder.
+	 */
+	async function addProjectByFolder(data: FoundProject) {
+		// check if the given project already exists using the path from the folder
+		const projectFolder = await unwrap(getProjectFolderByPath(data.path))
 
-		if (found.ok) {
-			const parsed = selectResultSchema.parse(found.value)
-
-			if (parsed.length > 0) {
-				sola.info('Project already exists', data.path)
-
-				const project = signal(parsed[0])
-				$projects([...$projects(), project])
+		if (projectFolder) {
+			if (projectBox.$get(projectFolder.project)) {
 				return
 			}
-		}
 
-		const result = await to(
-			DB.execute(`INSERT INTO projects (name, path, description, tags, diskUsage, hasChanges, createdAt, updatedAt) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-				data.name,
-				data.path,
-				data.description,
-				JSON.stringify(data.tags),
-				data.diskUsage,
-				data.hasChanges,
-				data.createdAt,
-				data.updatedAt,
-			),
-		)
+			sola.info('Found project by folder, storing it', data.path)
 
-		if (!result.ok) {
-			sola.error('Failed to add project', result.error, data)
+			projectBox.add(projectFolder.project)
+
 			return
 		}
 
-		const { lastInsertId: id } = result.value
+		// if no project folder is found, create a new project and the folder for it
+		const project = await unwrap(createProject(data))
+		assert(project, 'Error creating project')
+		await unwrap(createProjectFolder(data, project))
 
-		if (!id) {
-			sola.error('No id returned from DB when adding project', data)
-			return
-		}
-
-		data.id = id
-		const project = signal(data)
-		$projects([...$projects(), project])
+		projectBox.add(project)
 	}
 
-	async function syncProject($project: Signal<Project>) {
-		if (!await exists($project().path)) {
-			// TODO: support removed projects
-			sola.warn('Project path does not exist', $project().path)
-			return
+	async function addProject(data: FoundProject): Promise<Maybe<void>> {
+		if (!data.repoUrl) {
+			// if there is no repoUrl, the process is different
+			addProjectByFolder(data)
+
+			return maybe(undefined)
 		}
 
-		// only sync if the project hasn't been synced in the last 5 minutes
-		const { updatedAt } = $project()
+		// check if the project already exists using repoUrl
+		const found = await unwrap(getProjectByRepoUrl(data.repoUrl))
+		if (found) {
+			// check if the project is already in the project box
+			if (!projectBox.$get(found)) {
+				// if not, we need to add it to the project box
+				projectBox.add(found)
+			}
 
-		if (differenceInMinutes(new Date(), updatedAt) < 5) {
-			sola.debug('Project has been synced recently', $project().name)
-			return
+			// check if the project folder exists
+			const folder = await unwrap(getProjectFolderByPath(data.path))
+			// if it doesn't exist, create it
+			if (!folder) {
+				await unwrap(createProjectFolder(data, found))
+			}
+
+			// now project is in the project box
+			return maybe(undefined)
 		}
 
-		const foundProject = await to(getProjectFromDir({
-			isDirectory: true,
-			name: $project().path,
-			isFile: false,
-			isSymlink: false,
-		}))
+		// if the project is not found, we need to create a new project
+		const project = await unwrap(createProject(data))
+		assert(project, 'Error creating project')
+		// and the folder for it
+		await unwrap(createProjectFolder(data, project))
 
-		if (foundProject.ok && foundProject.value) {
-			DB.execute(
-				`UPDATE projects 
-					SET updatedAt = $1,
-						diskUsage = $2,
-						hasChanges = $3
-					WHERE id = $4`,
-				new Date(),
-				foundProject.value.diskUsage,
-				foundProject.value.hasChanges,
-				$project().id,
-			)
+		// and we register both
+		projectBox.add(project)
 
-			sola.debug('Synced project', $project().name)
-		}
+		return maybe(undefined)
 	}
 
-	async function getById(id: number): Promise<Maybe<Signal<Project>>> {
-		const savedProject = projectsById.get(id)
+	async function getById(id: number): Promise<Maybe<$Project | undefined>> {
+		const project = await unwrap(getProjectById(id))
 
-		if (savedProject) {
-			return maybe(savedProject)
+		if (!project) {
+			return maybe(undefined)
 		}
 
-		const found = await unwrap(DB.select(`SELECT * FROM projects WHERE id = $1`, id))
+		// check if the project is already in the project box
+		if (projectBox.$get(project)) {
+			return maybe(projectBox.$get(project))
+		}
 
-		const data = selectResultSchema.parse(found)[0]
-		const $project = signal<Project>(data)
+		// if the project is not in the project box, we need to add it
+		const $project = projectBox.add(project)
 
-		sola.debug('Found project', data)
-		projectsById.set(id, $project)
-		$projects([...$projects(), $project])
-		addToSyncQueue($project)
 		return maybe($project)
 	}
 
-	function unregisterProject($project: Signal<Project>) {
-		DB.execute(`DELETE FROM projects WHERE id = $1`, $project().id)
-		projectsById.delete($project().id)
-		$projects($projects().filter((project) => project() !== $project()))
-	}
-
-	async function scanProjects() {
+	async function scanFolders() {
 		$scanning(true)
-		const projectsFolder = await unwrap(pathInRoot('projects'))
-		const foundProjects = await to(findProjectsIn(projectsFolder))
+		// TODO: make this configurable
+		const startFolder = await unwrap(pathInRoot('projects'))
+		const foundProjects = await to(findProjectsIn(startFolder))
 
 		if (foundProjects.ok) {
-			foundProjects.value.forEach(addProject)
+			for (const project of foundProjects.value) {
+				const result = await to(addProject(project))
+
+				if (!result.ok) {
+					sola.error('Error adding project', project)
+				}
+			}
 		}
 
 		$scanning(false)
 	}
 
-	const $withChanges = computed(() => {
-		return $projects().filter((project) => project().hasChanges)
-	})
+	function getProjectFoldersByProject($project: $Project): LoaderSignal<Array<ProjectFolder>, Array<ProjectFolder>> {
+		const $folders = getFoldersByProjectId($project().id)
+
+		if ($folders().status !== 'loaded') {
+			$folders.reload()
+		}
+
+		return $folders
+	}
 
 	const box = {
-		$projects: $projects as ReadSignal<Array<Signal<Project>>>,
+		$projects: projectBox.$values as ReadSignal<Array<$Project>>,
 		$scanning: $scanning as ReadSignal<boolean>,
-		$withChanges,
 		load,
 		addProject,
 		getById,
-		syncProject,
-		unregisterProject,
-		scanProjects,
+		scanFolders,
+		getProjectFoldersByProject,
 	}
 
 	return box
 }
 
 export const ProjectBox = createProjectBox()
-
-const syncQueue: Array<Signal<Project>> = []
-
-function addToSyncQueue($project: Signal<Project>) {
-	if (syncQueue.includes($project)) {
-		return
-	}
-
-	syncQueue.push($project)
-}
-
-setInterval(() => {
-	if (syncQueue.length === 0) {
-		return
-	}
-	const project = syncQueue.shift()
-
-	if (!project) {
-		return
-	}
-
-	sola.debug('Syncing project', project().name)
-
-	ProjectBox.syncProject(project)
-}, 1000)

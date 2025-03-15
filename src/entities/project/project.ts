@@ -1,11 +1,12 @@
 import type { DirEntry } from '@tauri-apps/plugin-fs'
+import type { Signal } from '@vyke/taggy/signals'
 import type { Maybe } from '../../error'
-import { z } from 'zod'
-import { maybe, to, unwrap } from '../../error'
+import type { ProjectTag } from './project-queries'
+import { maybe, to, unwrap, unwrapOr } from '../../error'
 import { rootSola } from '../../logger'
-import { getDiskUsage, getFileMetadata, getFilesIn } from '../../utils/files'
-import { hasChanges } from '../../utils/git'
-import { stringToJSONSchema } from '../../utils/zod'
+import { getDiskUsage, getFilesIn } from '../../utils/files'
+import { getRemoteUrl, hasChanges } from '../../utils/git'
+import { getRepoMetadata, isGitHubRepo } from '../../utils/github'
 import { getGitProjectName, isGitProject } from './git'
 import { getGleamProjectName, isGleamProject } from './gleam'
 import { isGodotProject } from './godot'
@@ -14,31 +15,28 @@ import { getRustProjectName, isRustProject } from './rust'
 
 const sola = rootSola.withTag('project')
 
-export type ProjectTag = z.infer<typeof projectTagSchema>
-export const projectTagSchema = z.enum([
-	'nodejs',
-	'rust',
-	'elixir',
-	'gleam',
-	'python',
-	'git',
-	'erlang',
-	'denojs',
-	'godot',
-])
+export type $Project = Signal<Project>
+export type Project = {
+	id: number
+	repoUrl?: string
+	name: string
+	description: string
+	tags: Array<ProjectTag>
+	createdAt: Date
+	updatedAt: Date
+}
 
-export type Project = z.infer<typeof projectSchema>
-export const projectSchema = z.object({
-	id: z.number(),
-	name: z.string(),
-	path: z.string(),
-	description: z.string(),
-	createdAt: z.coerce.date(),
-	updatedAt: z.coerce.date(),
-	tags: stringToJSONSchema.pipe(z.array(projectTagSchema)),
-	diskUsage: z.number(),
-	hasChanges: z.string().transform((value) => value === 'true'),
-})
+export type ProjectFolder = {
+	id: number
+	path: string
+	createdAt: Date
+	updatedAt: Date
+	project: Project
+	diskUsage: number
+	hasChanges: boolean
+}
+
+export type $ProjectFolder = Signal<ProjectFolder>
 
 type IsProjectTag = (files: Array<DirEntry>) => boolean
 type NameGetter = (path: string) => Promise<Maybe<string | undefined>>
@@ -102,10 +100,20 @@ export async function getProjectName(path: string, tags: Array<ProjectTag>): Pro
 	return maybe(path.split('/').pop() ?? 'Unknown')
 }
 
-export async function findProjectsIn(path: string): Promise<Maybe<Array<Project>>> {
+const skipFolders = [
+	'node_modules',
+	'.git',
+	'.vscode',
+	'.idea',
+	'.DS_Store',
+	'.venv',
+	'.godot',
+]
+
+export async function findProjectsIn(path: string): Promise<Maybe<Array<FoundProject>>> {
 	sola.debug('finding projects in', path)
 	const files = await unwrap(getFilesIn(path))
-	const projects: Array<Project> = []
+	const projects: Array<FoundProject> = []
 
 	for (const file of files) {
 		const projectResult = await to(getProjectFromDir(file))
@@ -120,7 +128,9 @@ export async function findProjectsIn(path: string): Promise<Maybe<Array<Project>
 			continue
 		}
 
-		if (file.isDirectory) {
+		const isSkipFolder = skipFolders.some((folder) => file.name.endsWith(folder))
+
+		if (file.isDirectory && !isSkipFolder) {
 			const foundProjects = await to(findProjectsIn(file.name))
 			if (foundProjects.ok) {
 				projects.push(...foundProjects.value)
@@ -134,18 +144,30 @@ export async function findProjectsIn(path: string): Promise<Maybe<Array<Project>
 	return maybe(projects)
 }
 
-export async function getProjectFromDir(dir: DirEntry): Promise<Maybe<Project | undefined>> {
+export type FoundProject = {
+	repoUrl: string | undefined
+	name: string
+	tags: Array<ProjectTag>
+	path: string
+	description: string
+	diskUsage: number
+	hasChanges: boolean
+}
+
+export async function getProjectFromDir(dir: DirEntry): Promise<Maybe<FoundProject | undefined>> {
 	const tags = await unwrap(getProjectTags(dir))
 
+	// having at least one tag means it's a project
 	if (tags.length !== 0) {
+		const repoUrl = await unwrapOr(getRemoteUrl(dir.name), undefined)
+		const repoMetada = await (isGitHubRepo(repoUrl) ? unwrapOr(getRepoMetadata(repoUrl), undefined) : undefined)
+
 		return maybe({
-			id: -1,
-			name: await unwrap(getProjectName(dir.name, tags)),
+			repoUrl,
+			name: repoMetada?.repo.name ?? await unwrap(getProjectName(dir.name, tags)),
 			tags,
 			path: dir.name,
-			description: '',
-			createdAt: new Date(),
-			updatedAt: new Date(),
+			description: repoMetada?.repo.description ?? '',
 			diskUsage: await unwrap(getDiskUsage(dir.name)),
 			hasChanges: tags.includes('git')
 				? await unwrap(hasChanges(dir.name))

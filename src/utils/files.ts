@@ -6,6 +6,7 @@ import {
 	exists as unsafeExists,
 	readDir as unsafeReadDir,
 	readTextFile as unsafeReadTextFile,
+	remove as unsafeRemove,
 	stat as unsafeStat,
 } from '@tauri-apps/plugin-fs'
 import { Command } from '@tauri-apps/plugin-shell'
@@ -19,7 +20,7 @@ export const join = throwable(unsafeJoin)
 const readTextFile = throwable(unsafeReadTextFile)
 const stat = throwable(unsafeStat)
 export const exists = throwable(unsafeExists)
-
+const remove = throwable(unsafeRemove)
 export async function getFilesIn(path: string): Promise<Maybe<Array<DirEntry>>> {
 	const files = await unsafeReadDir(path)
 
@@ -141,4 +142,22 @@ export function prettySize(size: number): string {
 
 export function $prettySize(size: ReadSignal<number>): ReadSignal<string> {
 	return computed(() => prettySize(size()))
+}
+
+export async function deleteFolder(path: string): Promise<Maybe<boolean>> {
+	const fileExists = await to(exists(path))
+
+	if (!fileExists.ok || !fileExists.value) {
+		return maybe(false)
+	}
+
+	const result = await to(remove(path, { recursive: true }))
+
+	if (!result.ok) {
+		sola.error('Error deleting file', { path, error: result.error })
+
+		return maybe(false)
+	}
+
+	return maybe(true)
 }

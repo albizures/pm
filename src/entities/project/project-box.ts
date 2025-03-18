@@ -2,16 +2,17 @@ import type { LoaderSignal } from '@vyke/taggy'
 import type { ReadSignal } from '@vyke/taggy/signals'
 import type { Maybe } from '../../error'
 import type { $Project, FoundProject, Project, ProjectFolder } from './project'
-import { signal } from '@vyke/taggy/signals'
+import { effect, signal } from '@vyke/taggy/signals'
 import { assert, maybe, to, unwrap } from '../../error'
 import { rootSola } from '../../logger'
-
-import { pathInRoot } from '../../utils/files'
+import { deleteFolder, pathInRoot } from '../../utils/files'
 import { createBox } from '../box'
 import { findProjectsIn } from './project'
 import {
 	createProject,
 	createProjectFolder,
+	deleteProjectFolder,
+	deleteProject as deleteProjectQuery,
 	getAllProjects,
 	getFoldersByProjectId,
 	getProjectById,
@@ -158,6 +159,35 @@ function createProjectBox() {
 		$scanning(false)
 	}
 
+	/**
+	 * Deletes a project and all its folders.
+	 * If folders are not yet loaded, it will load them first.
+	 */
+	async function deleteProject($project: $Project) {
+		const $folders = getProjectFoldersByProject($project)
+		const untilLoaded = deferredPromise<Array<ProjectFolder>>()
+
+		sola.info('Deleting project', $project().id)
+		effect(() => {
+			if ($folders().status === 'loaded') {
+				untilLoaded.resolve($folders().$value())
+			}
+		})
+
+		await untilLoaded.promise
+
+		sola.info('Deleting folders', $folders().$value().length)
+		for (const folder of $folders().$value()) {
+			await deleteFolder(folder.path)
+			await deleteProjectFolder(folder.id)
+			sola.info('Deleted folder', folder.path)
+		}
+
+		await deleteProjectQuery($project().id)
+
+		projectBox.remove($project())
+	}
+
 	function getProjectFoldersByProject($project: $Project): LoaderSignal<Array<ProjectFolder>, Array<ProjectFolder>> {
 		const $folders = getFoldersByProjectId($project().id)
 
@@ -176,9 +206,32 @@ function createProjectBox() {
 		getById,
 		scanFolders,
 		getProjectFoldersByProject,
+		deleteProject,
 	}
 
 	return box
 }
 
 export const ProjectBox = createProjectBox()
+
+function deferredPromise<T>() {
+	let resolve: (value: T) => void = () => {}
+	let reject: (error: Error) => void = () => {}
+
+	const promise = new Promise<T>((...args) => {
+		resolve = args[0]
+		reject = args[1]
+	})
+
+	return {
+		get resolve() {
+			return resolve
+		},
+		get reject() {
+			return reject
+		},
+		get promise() {
+			return promise
+		},
+	}
+}

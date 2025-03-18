@@ -9,6 +9,7 @@ const iconNames = {
 	'close': 'fa6-solid--xmark',
 	'trash': 'fa6-solid--trash-can',
 	'folder': 'fa6-solid--folder',
+	'options': 'fa6-solid--ellipsis-vertical',
 } as const
 
 type IconName = keyof typeof iconNames

@@ -7,6 +7,7 @@ import { ProjectBox } from '../entities/project/project-box'
 import { rootSola } from '../logger'
 import { a, button, div, h1, h4, li, span, ul } from '../tags'
 import { $prettySize } from '../utils/files'
+import { DeleteAllButton } from './DeleteAllButton'
 import { Icon } from './Icon'
 
 const sola = rootSola.withTag('ProjectCard')
@@ -25,8 +26,23 @@ export function ProjectCard(props: ProjectCardProps) {
 	const href = `/project?id=${$project().id}`
 
 	return div({
-		className: 'border border-base-100 px-4 py-2 rounded-lg',
+		className: 'relative border border-base-100 px-4 py-2 rounded-lg',
 	}, [
+		// options
+		div({ className: 'absolute top-0 right-0' }, [
+			div({ className: 'dropdown dropdown-end' }, [
+				div({ tabIndex: 0, role: 'button', className: 'p-1 m-1 cursor-pointer hover:bg-base-100 rounded-full' }, [
+					Icon({ name: 'options', className: 'text-xs' }),
+				]),
+				ul({ tabIndex: 0, className: 'menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm' }, [
+					li([a({ href }, ['Item 1'])]),
+					li([
+						DeleteAllButton({ $project, goBack: false }),
+					]),
+				]),
+			]),
+		]),
+
 		// title
 		a({ href }, [
 			h1({ className: 'text-lg font-bold' }, [

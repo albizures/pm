@@ -50,6 +50,14 @@
         }
       ]
     },
+    {
+      "identifier": "fs:allow-remove",
+      "allow": [
+        {
+          "path": "$HOME/projects/**"
+        }
+      ]
+    },
     "shell:default",
     {
       "identifier": "shell:allow-execute",
@@ -78,6 +86,11 @@
           "name": "dist-usage",
           "cmd": "du",
           "args": ["-d", "0", {"validator": "\\S+"}]
+        },
+        {
+          "name": "open-in-cursor",
+          "cmd": "cursor",
+          "args": [{"validator": "\\S+"}]
         }
       ]
     }

@@ -5,7 +5,10 @@ import { $access } from '@vyke/taggy/signals'
 import { $formatDate } from '../../date'
 import { ProjectBox } from '../../entities/project/project-box'
 import { unwrap } from '../../error'
-import { a, button, div, h1, h3, li, p, ul } from '../../tags'
+import { a, button, div, h1, h3, li, p, span, ul } from '../../tags'
+import { DeleteAllButton } from '../DeleteAllButton'
+import { ExternalLink } from '../ExternalLink'
+import { ProjectFolderCard } from '../ProjectFolderCard'
 import { SpaceAvailableToFree } from '../stats/SpaceAvailableToFreeStat'
 import { UncommitedChangesStat } from '../stats/UncommitedChangesStat'
 
@@ -52,7 +55,7 @@ function isNotEmptyString(value: unknown): value is string {
 }
 
 function ProjectPanel(props: ProjectPanelProps) {
-	const $project = props.$project
+	const { $project } = props
 	const $accessProject = $access($project)
 	const $folders = ProjectBox.getProjectFoldersByProject($project)
 
@@ -67,8 +70,13 @@ function ProjectPanel(props: ProjectPanelProps) {
 					),
 				]),
 				p([
-					'Repo Url: ',
-					$accessProject.repoUrl,
+					$when($accessProject.repoUrl,
+						$when.case(isNotEmptyString, (repoUrl) => div([
+							span(['Repo Url: ']),
+							ExternalLink({ href: repoUrl, children: repoUrl }),
+						])),
+						$when.otherwise(() => 'No repo url'),
+					),
 				]),
 			]),
 			div({ className: 'pr-20 flex gap-2' }, [
@@ -83,6 +91,7 @@ function ProjectPanel(props: ProjectPanelProps) {
 				}, [
 					'Unregister',
 				]),
+				DeleteAllButton({ $project, className: 'btn btn-error' }),
 			]),
 		]),
 		div({ className: 'stats shadow' }, [
@@ -99,10 +108,10 @@ function ProjectPanel(props: ProjectPanelProps) {
 				$formatDate($accessProject.createdAt, 'short-time-ago'),
 			]),
 		]),
-		div({ className: 'flex flex-col gap-2' }, [
-			ul([
+		div({ className: 'flex flex-col gap-4 p-4' }, [
+			ul({ className: 'flex flex-col gap-2 max-w-3xl' }, [
 				$list($folders().$value, (folder) => li([
-					folder.path,
+					ProjectFolderCard({ folder }),
 				])),
 			]),
 		]),

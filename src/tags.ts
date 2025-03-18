@@ -14,4 +14,7 @@ export const {
 	input,
 	h4,
 	label,
+	dialog,
+	details,
+	summary,
 } = Html

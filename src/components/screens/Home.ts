@@ -83,7 +83,7 @@ export function Home() {
 			]),
 
 			// grid of projects
-			ul({ className: 'grid grid-cols-2 md:grid-cols-4 gap-4 px-4 pb-4' }, [
+			ul({ className: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4 pb-4' }, [
 				$list(ProjectBox.$projects, ($project) => {
 					fuse.add($project())
 
